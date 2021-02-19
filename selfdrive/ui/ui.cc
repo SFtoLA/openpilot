@@ -41,8 +41,8 @@ static void ui_init_vision(UIState *s) {
 
 
 void ui_init(UIState *s) {
-  s->sm = new SubMaster({"modelV2", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal", "frame", "liveLocationKalman",
-                         "health", "carParams", "driverState", "driverMonitoringState", "sensorEvents", "carState", "ubloxGnss", "longitudinalPlan",
+  s->sm = new SubMaster({"modelV2", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "deviceState", "roadCameraState", "liveLocationKalman",
+                         "pandaState", "carParams", "driverState", "driverMonitoringState", "sensorEvents", "carState", "ubloxGnss", "longitudinalPlan",
                          "gpsPlannerPointsDEPRECATED"});
 
   s->started = false;
@@ -168,15 +168,15 @@ static void update_sockets(UIState *s) {
     s->active_app = data.getActiveApp();
     s->sidebar_collapsed = data.getSidebarCollapsed();
   }
-  if (sm.updated("thermal")) {
-    scene.thermal = sm["thermal"].getThermal();
+  if (sm.updated("deviceState")) {
+    scene.deviceState = sm["deviceState"].getDeviceState();
   }
-  if (sm.updated("health")) {
-    auto health = sm["health"].getHealth();
-    scene.pandaType = health.getPandaType();
-    s->ignition = health.getIgnitionLine() || health.getIgnitionCan();
-  } else if ((s->sm->frame - s->sm->rcv_frame("health")) > 5*UI_FREQ) {
-    scene.pandaType = cereal::HealthData::PandaType::UNKNOWN;
+  if (sm.updated("pandaState")) {
+    auto pandaState = sm["pandaState"].getPandaState();
+    scene.pandaType = pandaState.getPandaType();
+    s->ignition = pandaState.getIgnitionLine() || pandaState.getIgnitionCan();
+  } else if ((s->sm->frame - s->sm->rcv_frame("pandaState")) > 5*UI_FREQ) {
+    scene.pandaType = cereal::PandaState::PandaType::UNKNOWN;
   }
   if (sm.updated("ubloxGnss")) {
     auto data = sm["ubloxGnss"].getUbloxGnss();
@@ -212,8 +212,7 @@ static void update_sockets(UIState *s) {
       }
     }
   }
-  s->started = true;
-  // s->started = scene.thermal.getStarted() || scene.frontview;
+  s->started = scene.deviceState.getStarted() || scene.frontview;
 }
 
 static void update_alert(UIState *s) {
@@ -235,7 +234,7 @@ static void update_alert(UIState *s) {
   }
 
   // Handle controls timeout
-  if (scene.thermal.getStarted() && (s->sm->frame - s->started_frame) > 10 * UI_FREQ) {
+  if (scene.deviceState.getStarted() && (s->sm->frame - s->started_frame) > 10 * UI_FREQ) {
     const uint64_t cs_frame = s->sm->rcv_frame("controlsState");
     if (cs_frame < s->started_frame) {
       // car is started, but controlsState hasn't been seen at all
@@ -282,6 +281,10 @@ static void update_vision(UIState *s) {
     VisionBuf * buf = s->vipc_client->recv();
     if (buf != nullptr){
       s->last_frame = buf;
+    } else {
+#if defined(QCOM) || defined(QCOM2)
+      LOGE("visionIPC receive timeout");
+#endif
     }
   }
 }

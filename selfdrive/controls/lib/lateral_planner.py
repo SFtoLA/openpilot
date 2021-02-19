@@ -82,8 +82,8 @@ class LateralPlanner():
   def update(self, sm, CP, VM):
     v_ego = sm['carState'].vEgo
     active = sm['controlsState'].active
-    steering_wheel_angle_offset_deg = sm['liveParameters'].angleOffset
-    steering_wheel_angle_deg = sm['carState'].steeringAngle
+    steering_wheel_angle_offset_deg = sm['liveParameters'].angleOffsetDeg
+    steering_wheel_angle_deg = sm['carState'].steeringAngleDeg
 
     # Update vehicle model
     x = max(sm['liveParameters'].stiffnessFactor, 0.1)
@@ -188,7 +188,7 @@ class LateralPlanner():
     next_curvature = interp(delay, self.t_idxs[:MPC_N+1], self.mpc_solution.curvature)
     psi = interp(delay, self.t_idxs[:MPC_N+1], self.mpc_solution.psi)
     next_curvature_rate = self.mpc_solution.curvature_rate[0]
-    next_curvature_from_psi = psi/(v_ego*delay)
+    next_curvature_from_psi = psi/(max(v_ego, 1e-1) * delay)
     if psi > self.mpc_solution.curvature[0] * delay * v_ego:
       next_curvature = max(next_curvature_from_psi, next_curvature)
     else:
@@ -232,9 +232,9 @@ class LateralPlanner():
     plan_send.lateralPlan.rProb = float(self.LP.rll_prob)
     plan_send.lateralPlan.dProb = float(self.LP.d_prob)
 
-    plan_send.lateralPlan.angleSteers = float(self.desired_steering_wheel_angle_deg)
-    plan_send.lateralPlan.rateSteers = float(self.desired_steering_wheel_angle_rate_deg)
-    plan_send.lateralPlan.angleOffset = float(sm['liveParameters'].angleOffsetAverage)
+    plan_send.lateralPlan.steeringAngleDeg = float(self.desired_steering_wheel_angle_deg)
+    plan_send.lateralPlan.steeringRateDeg = float(self.desired_steering_wheel_angle_rate_deg)
+    plan_send.lateralPlan.angleOffsetDeg = float(sm['liveParameters'].angleOffsetAverageDeg)
     plan_send.lateralPlan.mpcSolutionValid = bool(plan_solution_valid)
 
     plan_send.lateralPlan.desire = self.desire
