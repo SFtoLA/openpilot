@@ -53,7 +53,9 @@ def test_process(cfg, lr, cmp_log_fn, ignore_fields=None, ignore_msgs=None):
     ignore_fields = []
   if ignore_msgs is None:
     ignore_msgs = []
-  url = BASE_URL + os.path.basename(cmp_log_fn)
+  # url = BASE_URL + os.path.basename(cmp_log_fn)
+  url = cmp_log_fn
+  # print(f'url is {url}')
   cmp_log_msgs = list(LogReader(url))
 
   log_msgs = replay_process(cfg, lr)
