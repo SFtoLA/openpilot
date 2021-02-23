@@ -127,20 +127,16 @@ class Planner():
     gps_planner_points = sm['gpsPlannerPointsDEPRECATED']
     speed_limit_MPH = gps_planner_points.speedLimit #MPH
     self.speed_limit_MS = speed_limit_MPH * CV.MPH_TO_MS #MS
-    # print(f"speed limit in planner is {speed_limit_MPH:.3f} MPH.")
-    # print(f"speed limit in planner is {self.speed_limit_MS:.3f} MS")
 
     long_control_state = sm['controlsState'].longControlState
     v_cruise_kph = sm['controlsState'].vCruise
     force_slow_decel = sm['controlsState'].forceDecel
-    # force_slow_decel = False
 
     v_cruise_kph = min(v_cruise_kph, V_CRUISE_MAX)
     self.speed_limit_MS = min(self.speed_limit_MS, V_CRUISE_MAX * CV.KPH_TO_MS)
+    v_cruise_setpoint = v_cruise_kph * CV.KPH_TO_MS #MS
     if self.use_speed_limit and self.speed_limit_MS > 0:
-      v_cruise_setpoint = self.speed_limit_MS
-    else:
-      v_cruise_setpoint = v_cruise_kph * CV.KPH_TO_MS
+      v_cruise_setpoint = min(v_cruise_setpoint, self.speed_limit_MS)
 
     lead_1 = sm['radarState'].leadOne
     lead_2 = sm['radarState'].leadTwo
