@@ -19,6 +19,7 @@ LOG_MPC = os.environ.get('LOG_MPC', False)
 
 LANE_CHANGE_SPEED_MIN = 45 * CV.MPH_TO_MS
 LANE_CHANGE_TIME_MAX = 10.
+BSM_TIME_WINDOW = 5.0
 
 DESIRES = {
   LaneChangeDirection.none: {
@@ -63,6 +64,10 @@ class LateralPlanner():
     self.plan_yaw = np.zeros((TRAJECTORY_SIZE,))
     self.t_idxs = np.arange(TRAJECTORY_SIZE)
     self.y_pts = np.zeros(TRAJECTORY_SIZE)
+    self.bsm_left_safe = False
+    self.bsm_right_safe = False
+    self.bsm_left_timer = 0
+    self.bsm_right_timer = 0
 
   def setup_mpc(self):
     self.libmpc = libmpc_py.libmpc
@@ -112,13 +117,35 @@ class LateralPlanner():
     if (not active) or (self.lane_change_timer > LANE_CHANGE_TIME_MAX) or (not self.lane_change_enabled):
       self.lane_change_state = LaneChangeState.off
       self.lane_change_direction = LaneChangeDirection.none
+      self.bsm_left_safe = False
+      self.bsm_right_safe = False
+      self.bsm_left_timer = 0.0
+      self.bsm_right_timer = 0.0
     else:
       torque_applied = sm['carState'].steeringPressed and \
                        ((sm['carState'].steeringTorque > 0 and self.lane_change_direction == LaneChangeDirection.left) or
                         (sm['carState'].steeringTorque < 0 and self.lane_change_direction == LaneChangeDirection.right))
+      
+      # logic for BSM
+      if sm['carState'].leftBlindspot:
+        self.bsm_left_timer = 0.0
+        self.bsm_left_safe = False  
+      elif sm['carState'].rightBlindspot:
+        self.bsm_right_timer = 0.0
+        self.bsm_right_safe = False
+      self.bsm_left_timer += DT_MDL
+      self.bsm_right_timer += DT_MDL
+      if self.bsm_left_timer >= BSM_TIME_WINDOW: # 5 sec time window
+        self.bsm_left_safe = True
+      if self.bsm_right_timer >= BSM_TIME_WINDOW: # 5 sec time window
+        self.bsm_right_safe = True
+      # cap timers to BSM_TIME_WINDOW
+      self.bsm_left_timer = min(self.bsm_left_timer, BSM_TIME_WINDOW)
+      self.bsm_right_timer = min(self.bsm_right_timer, BSM_TIME_WINDOW)
 
-      blindspot_detected = ((sm['carState'].leftBlindspot and self.lane_change_direction == LaneChangeDirection.left) or
-                            (sm['carState'].rightBlindspot and self.lane_change_direction == LaneChangeDirection.right))
+
+      blindspot_detected = ((self.lane_change_direction == LaneChangeDirection.left and not self.bsm_left_safe) or
+                            (self.lane_change_direction == LaneChangeDirection.right and not self.bsm_right_safe))
 
       lane_change_prob = self.LP.l_lane_change_prob + self.LP.r_lane_change_prob
 
