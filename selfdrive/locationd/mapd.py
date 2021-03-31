@@ -68,49 +68,6 @@ class QueryThread(threading.Thread):
     self.distance_to_edge = 500
     self.OVERPASS_API_URL = "https://z.overpass-api.de/api/interpreter"
     self.mapbox_access_token = "pk.eyJ1IjoiYWxiZXJ0bHVkd2lnIiwiYSI6ImNra3Q4bW5ydDB1dHYydXJ0eHYyNGI5cmEifQ.BqCUvH3GvayncqLhqaA9lA"
- 
-  def build_way_query(self, lat, lon, bearing, radius=50):
-    # start: 37.671104353440676, -122.46608250509264
-    # end: 37.73095554576629, -122.47186631934458
-    a = 111132.954*math.cos(float(lat)/180*3.141592)
-    b = 111132.954 - 559.822 * math.cos( 2 * float(lat)/180*3.141592) + 1.175 * math.cos( 4 * float(lat)/180*3.141592)
-    heading = math.radians(-bearing + 90)
-    lat = lat+math.sin(heading)*radius/2/b
-    lon = lon+math.cos(heading)*radius/2/a
-    pos = "  (around:%f,%f,%f)" % (radius, lat, lon)
-    lat_lon = "(%f,%f)" % (lat, lon)
-    q = """(
-    way
-    """ + pos + """
-    [highway][highway!~"^(footway|path|bridleway|steps|cycleway|construction|bus_guideway|escape)$"];
-    >;);out;""" + """is_in""" + lat_lon + """;area._[admin_level~"[24]"];
-    convert area ::id = id(), admin_level = t['admin_level'],
-    name = t['name'], "ISO3166-1:alpha2" = t['ISO3166-1:alpha2'];out;
-    """
-    # self.logger.debug("build_way_query : %s" % str(q))
-    return q, lat, lon
-    """Builds a query to find all highways within a given radius around a point"""
-    # latest_gps = gps_entries[-1]
-    lat = latest_gps.latitude
-    lon = latest_gps.longitude
-    bearing = latest_gps.bearing
-    a = 111132.954*math.cos(float(lat)/180*3.141592)
-    b = 111132.954 - 559.822 * math.cos( 2 * float(lat)/180*3.141592) + 1.175 * math.cos( 4 * float(lat)/180*3.141592)
-    heading = math.radians(-bearing + 90)
-    lat = lat+math.sin(heading)*radius/2/b
-    lon = lon+math.cos(heading)*radius/2/a
-    pos = "  (around:%f,%f,%f)" % (radius, lat, lon)
-    lat_lon = "(%f,%f)" % (lat, lon)
-    q = """(
-    way
-    """ + pos + """
-    [highway][highway!~"^(footway|path|bridleway|steps|cycleway|construction|bus_guideway|escape)$"];
-    >;);out;""" + """is_in""" + lat_lon + """;area._[admin_level~"[24]"];
-    convert area ::id = id(), admin_level = t['admin_level'],
-    name = t['name'], "ISO3166-1:alpha2" = t['ISO3166-1:alpha2'];out;
-    """
-    # self.logger.debug("build_way_query : %s" % str(q))
-    return q, lat, lon
 
   def query_mapbox(self, lat, lon, radius=50):
     # start (lat, long): 37.67108699534605, -122.46597571343007
