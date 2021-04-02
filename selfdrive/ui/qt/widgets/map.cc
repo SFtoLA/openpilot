@@ -21,14 +21,8 @@ const std::string mapbox_access_token_path = util::getenv_default("HOME", "/.com
 QtMap::QtMap(QWidget *parent) : QFrame(parent) {
   QStackedLayout* layout = new QStackedLayout();
 
-  auto file = QFile(mapbox_access_token_path.c_str());
-  assert(file.open(QIODevice::ReadOnly));
-  auto mapboxAccessToken = file.readAll();
-  qDebug() << "Mapbox access token:" << mapboxAccessToken;
-
   // might have to use QQuickWidget for proper stacking?
   QQuickWidget *map = new QQuickWidget();
-  map->rootContext()->setContextProperty("mapboxAccessToken", mapboxAccessToken);
   map->setSource(QUrl::fromLocalFile("qt/widgets/map.qml"));
   mapObject = map->rootObject();
   QSize size = map->size();
