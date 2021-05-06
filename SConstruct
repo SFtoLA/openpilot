@@ -3,8 +3,6 @@ import platform
 import subprocess
 import sysconfig
 
-zmq = 'zmq'
-
 arch = subprocess.check_output(["uname", "-m"], encoding='utf8').rstrip()
 if platform.system() == "Darwin":
   arch = "Darwin"
@@ -16,7 +14,12 @@ cpppath = [
   cereal_dir,
   messaging_dir,
   '/usr/lib/include',
+  '/opt/homebrew/include',
   sysconfig.get_paths()['include'],
+]
+
+libpath = [
+  '/opt/homebrew/lib',
 ]
 
 AddOption('--test',
@@ -47,13 +50,13 @@ env = Environment(
   CFLAGS="-std=gnu11",
   CXXFLAGS="-std=c++1z",
   CPPPATH=cpppath,
+  LIBPATH=libpath,
   CYTHONCFILESUFFIX=".cpp",
   tools=["default", "cython"]
 )
 
 QCOM_REPLAY = False
-Export('env', 'zmq', 'arch', 'QCOM_REPLAY')
-
+Export('env', 'arch', 'QCOM_REPLAY')
 
 envCython = env.Clone(LIBS=[])
 envCython["CCFLAGS"] += ["-Wno-#warnings", "-Wno-deprecated-declarations"]
@@ -61,7 +64,7 @@ if arch == "Darwin":
   envCython["LINKFLAGS"] = ["-bundle", "-undefined", "dynamic_lookup"]
 elif arch == "aarch64":
   envCython["LINKFLAGS"] = ["-shared"]
-  envCython["LIBS"] = [os.path.basename(python_path)]
+  envCython["LIBS"] = [os.path.basename(sysconfig.get_paths()['include'])]
 else:
   envCython["LINKFLAGS"] = ["-pthread", "-shared"]
 

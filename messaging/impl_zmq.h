@@ -1,5 +1,5 @@
 #pragma once
-#include "messaging.hpp"
+#include "messaging.h"
 #include <zmq.h>
 #include <string>
 
@@ -47,6 +47,7 @@ public:
   int connect(Context *context, std::string endpoint, bool check_endpoint=true);
   int sendMessage(Message *message);
   int send(char *data, size_t size);
+  bool all_readers_updated();
   ~ZMQPubSocket();
 };
 
