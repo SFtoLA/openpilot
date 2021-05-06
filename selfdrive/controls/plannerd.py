@@ -24,7 +24,7 @@ def plannerd_thread(sm=None, pm=None):
 
   if sm is None:
     sm = messaging.SubMaster(['carState', 'controlsState', 'radarState', 'modelV2',
-                              'gpsPlannerPointsDEPRECATED', 'liveParameters'],
+                              'gpsPlannerPointsDEPRECATED', 'liveParameters', 'testJoystick'],
                              poll=['radarState', 'modelV2'])
 
   if pm is None:

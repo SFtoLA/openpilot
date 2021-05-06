@@ -101,6 +101,8 @@ class LateralPlanner():
       self.plan_yaw = list(md.orientation.z)
 
     # Lane change logic
+    current_desire = sm['testJoystick'].desire
+    print(current_desire)
     one_blinker = sm['carState'].leftBlinker != sm['carState'].rightBlinker
     below_lane_change_speed = v_ego < LANE_CHANGE_SPEED_MIN
 
