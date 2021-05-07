@@ -146,7 +146,7 @@ static void draw_frame(UIState *s) {
 static void ui_draw_vision_lane_lines(UIState *s) {
   const UIScene &scene = s->scene;
   NVGpaint track_bg;
-  if (!scene.end_to_end) {
+  if (!scene.end_to_end && false) {
     // paint lanelines
     for (int i = 0; i < std::size(scene.lane_line_vertices); i++) {
       NVGcolor color = nvgRGBAf(1.0, 1.0, 1.0, scene.lane_line_probs[i]);
@@ -162,7 +162,7 @@ static void ui_draw_vision_lane_lines(UIState *s) {
                                           COLOR_WHITE, COLOR_WHITE_ALPHA(0));
   } else {
     track_bg = nvgLinearGradient(s->vg, s->fb_w, s->fb_h, s->fb_w, s->fb_h * .4,
-                                          COLOR_RED, COLOR_RED_ALPHA(0));
+                                          COLOR_GREEN, COLOR_GREEN_ALPHA(0));
   }
   // paint path
   ui_draw_line(s, scene.track_vertices, nullptr, &track_bg);
@@ -200,7 +200,7 @@ static void ui_draw_vision_maxspeed(UIState *s) {
   ui_draw_rect(s->vg, rect, COLOR_WHITE_ALPHA(100), 10, 20.);
 
   nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
-  ui_draw_text(s, rect.centerX(), 148, "MAX", 26 * 2.5, COLOR_WHITE_ALPHA(is_cruise_set ? 200 : 100), "sans-regular");
+  ui_draw_text(s, rect.centerX(), 148, "MAX Speed", 26 * 2.5, COLOR_WHITE_ALPHA(is_cruise_set ? 200 : 100), "sans-regular");
   if (is_cruise_set) {
     const std::string maxspeed_str = std::to_string((int)std::nearbyint(maxspeed));
     ui_draw_text(s, rect.centerX(), 242, maxspeed_str.c_str(), 48 * 2.5, COLOR_WHITE, "sans-bold");
@@ -215,17 +215,29 @@ static void ui_draw_vision_speed(UIState *s) {
   nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
   ui_draw_text(s, s->viz_rect.centerX(), 240, speed_str.c_str(), 96 * 2.5, COLOR_WHITE, "sans-bold");
   ui_draw_text(s, s->viz_rect.centerX(), 320, s->scene.is_metric ? "km/h" : "mph", 36 * 2.5, COLOR_WHITE_ALPHA(200), "sans-regular");
+
+  // draw blinkers
+  // auto desire = s->scene.joystick_state.getDesire();
+  // if(desire == cereal::Joystick::DesireStatus::LEFT_LANE_CHANGE) {
+  //     nvgBeginPath(s->vg);
+  //     nvgMoveTo(s->vg, s->viz_rect.centerX() - 10, s->viz_rect.centerY() + header_h/4);
+  //     nvgLineTo(s->vg, s->viz_rect.centerX() - 10 - 140, s->viz_rect.centerY() + header_h/4 + header_h/4);
+  //     nvgLineTo(s->vg, s->viz_rect.centerX() - 10, s->viz_rect.centerY() + header_h/2 + header_h/4);
+  //     nvgClosePath(s->vg);
+  //     nvgFillColor(s->vg, nvgRGBA(0,255,0,30));
+  //     nvgFill(s->vg);
+  //   }
 }
 
-static void ui_draw_vision_event(UIState *s) {
-  if (s->scene.controls_state.getEngageable()) {
-    // draw steering wheel
-    const int radius = 96;
-    const int center_x = s->viz_rect.right() - radius - bdr_s * 2;
-    const int center_y = s->viz_rect.y + radius  + (bdr_s * 1.5);
-    ui_draw_circle_image(s, center_x, center_y, radius, "wheel", bg_colors[s->status], 1.0f);
-  }
-}
+// static void ui_draw_vision_event(UIState *s) {
+//   if (s->scene.controls_state.getEngageable()) {
+//     // draw steering wheel
+//     const int radius = 96;
+//     const int center_x = s->viz_rect.right() - radius - bdr_s * 2;
+//     const int center_y = s->viz_rect.y + radius  + (bdr_s * 1.5);
+//     ui_draw_circle_image(s, center_x, center_y, radius, "wheel", bg_colors[s->status], 1.0f);
+//   }
+// }
 
 static void ui_draw_vision_face(UIState *s) {
   const int radius = 96;
@@ -282,7 +294,7 @@ static void ui_draw_vision_header(UIState *s) {
 
   ui_draw_vision_maxspeed(s);
   ui_draw_vision_speed(s);
-  ui_draw_vision_event(s);
+  // ui_draw_vision_event(s);
 }
 
 static void ui_draw_vision_frame(UIState *s) {
@@ -305,7 +317,7 @@ static void ui_draw_vision(UIState *s) {
     }
     // Set Speed, Current Speed, Status/Events
     ui_draw_vision_header(s);
-    if (s->scene.controls_state.getAlertSize() == cereal::ControlsState::AlertSize::NONE) {
+    if (s->scene.controls_state.getAlertSize() == cereal::ControlsState::AlertSize::NONE && false) {
       ui_draw_vision_face(s);
     }
   } else {
@@ -315,7 +327,9 @@ static void ui_draw_vision(UIState *s) {
 
 static void ui_draw_background(UIState *s) {
   const NVGcolor color = bg_colors[s->status];
-  glClearColor(color.r, color.g, color.b, 1.0);
+  // glClearColor(color.r, color.g, color.b, 1.0);
+  // change bg color
+  glClearColor(color.b, color.g, color.r, 1.0);
   glClear(GL_STENCIL_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 

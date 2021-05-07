@@ -13,10 +13,12 @@ from cereal import log
 
 LaneChangeState = log.LateralPlan.LaneChangeState
 LaneChangeDirection = log.LateralPlan.LaneChangeDirection
+DesireStatus = log.Joystick.DesireStatus
 
 LOG_MPC = os.environ.get('LOG_MPC', False)
 
-LANE_CHANGE_SPEED_MIN = 30 * CV.MPH_TO_MS
+LANE_CHANGE_SPEED_MIN = 3 * CV.MPH_TO_MS
+# LANE_CHANGE_SPEED_MIN = 30 * CV.MPH_TO_MS
 LANE_CHANGE_TIME_MAX = 10.
 # this corresponds to 80deg/s and 20deg/s steering angle in a toyota corolla
 MAX_CURVATURE_RATES = [0.03762194918267951, 0.003441203371932992]
@@ -60,6 +62,7 @@ class LateralPlanner():
     self.lane_change_ll_prob = 1.0
     self.prev_one_blinker = False
     self.desire = log.LateralPlan.Desire.none
+    self.manual_desire = DesireStatus.laneFollow
 
     self.path_xyz = np.zeros((TRAJECTORY_SIZE,3))
     self.path_xyz_stds = np.ones((TRAJECTORY_SIZE,3))
@@ -98,7 +101,10 @@ class LateralPlanner():
       self.path_xyz_stds = np.column_stack([md.position.xStd, md.position.yStd, md.position.zStd])
 
     # Lane change logic
-    one_blinker = sm['carState'].leftBlinker != sm['carState'].rightBlinker
+    self.manual_desire = sm['testJoystick'].desire
+    manual_lane_change = self.manual_desire == DesireStatus.leftLaneChange or \
+      self.manual_desire == DesireStatus.rightLaneChange
+    one_blinker = (sm['carState'].leftBlinker != sm['carState'].rightBlinker) or manual_lane_change
     below_lane_change_speed = v_ego < LANE_CHANGE_SPEED_MIN
 
     if (not active) or (self.lane_change_timer > LANE_CHANGE_TIME_MAX):
@@ -108,6 +114,7 @@ class LateralPlanner():
       torque_applied = sm['carState'].steeringPressed and \
                        ((sm['carState'].steeringTorque > 0 and self.lane_change_direction == LaneChangeDirection.left) or
                         (sm['carState'].steeringTorque < 0 and self.lane_change_direction == LaneChangeDirection.right))
+      commit_to_manual_ll = sm['testJoystick'].commit
 
       blindspot_detected = ((sm['carState'].leftBlindspot and self.lane_change_direction == LaneChangeDirection.left) or
                             (sm['carState'].rightBlindspot and self.lane_change_direction == LaneChangeDirection.right))
@@ -116,11 +123,16 @@ class LateralPlanner():
 
       # State transitions
       # off
+      # print(f'lane change state is {self.lane_change_state}')
+      # print(f'below lane change speed is {below_lane_change_speed}')
+      # print(f'one blinker is {one_blinker}')
+      # print(f'prev one blinker is {self.prev_one_blinker}')
       if self.lane_change_state == LaneChangeState.off and one_blinker and not self.prev_one_blinker and not below_lane_change_speed:
-        if sm['carState'].leftBlinker:
+        if sm['carState'].leftBlinker or self.manual_desire == DesireStatus.leftLaneChange:
           self.lane_change_direction = LaneChangeDirection.left
-        elif sm['carState'].rightBlinker:
+        elif sm['carState'].rightBlinker or self.manual_desire == DesireStatus.rightLaneChange:
           self.lane_change_direction = LaneChangeDirection.right
+      
 
         self.lane_change_state = LaneChangeState.preLaneChange
         self.lane_change_ll_prob = 1.0
@@ -130,6 +142,8 @@ class LateralPlanner():
         if not one_blinker or below_lane_change_speed:
           self.lane_change_state = LaneChangeState.off
         elif torque_applied and not blindspot_detected:
+          self.lane_change_state = LaneChangeState.laneChangeStarting
+        elif commit_to_manual_ll and not blindspot_detected:
           self.lane_change_state = LaneChangeState.laneChangeStarting
 
       # starting

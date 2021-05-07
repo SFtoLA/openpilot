@@ -135,6 +135,9 @@ static void update_state(UIState *s) {
   if (sm.updated("carState")) {
     scene.car_state = sm["carState"].getCarState();
   }
+  if (sm.updated("testJoystick")) {
+    scene.joystick_state = sm["testJoystick"].getTestJoystick();
+  }
   if (sm.updated("radarState")) {
     std::optional<cereal::ModelDataV2::XYZTData::Reader> line;
     if (sm.rcv_frame("modelV2") > 0) {
@@ -280,7 +283,7 @@ static void update_status(UIState *s) {
 QUIState::QUIState(QObject *parent) : QObject(parent) {
   ui_state.sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
     "modelV2", "controlsState", "liveCalibration", "radarState", "deviceState", "liveLocationKalman",
-    "pandaState", "carParams", "driverState", "driverMonitoringState", "sensorEvents", "carState", "ubloxGnss",
+    "pandaState", "carParams", "driverState", "driverMonitoringState", "sensorEvents", "carState", "ubloxGnss", "testJoystick"
 #ifdef QCOM2
     "roadCameraState",
 #endif
