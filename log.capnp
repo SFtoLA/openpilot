@@ -1141,6 +1141,13 @@ struct Joystick {
   # convenient for debug and live tuning
   axes @0: List(Float32);
   buttons @1: List(Bool);
+  desire @2: DesireStatus;
+  commit @3: Bool;
+  enum DesireStatus {
+    laneFollow @0;
+    leftLaneChange @1;
+    rightLaneChange @2;
+  }
 }
 
 struct DriverState {
