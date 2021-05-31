@@ -17,8 +17,7 @@ DesireStatus = log.Joystick.DesireStatus
 
 LOG_MPC = os.environ.get('LOG_MPC', False)
 
-LANE_CHANGE_SPEED_MIN = 3 * CV.MPH_TO_MS
-# LANE_CHANGE_SPEED_MIN = 30 * CV.MPH_TO_MS
+LANE_CHANGE_SPEED_MIN = 30 * CV.MPH_TO_MS
 LANE_CHANGE_TIME_MAX = 10.
 # this corresponds to 80deg/s and 20deg/s steering angle in a toyota corolla
 MAX_CURVATURE_RATES = [0.03762194918267951, 0.003441203371932992]
@@ -123,10 +122,6 @@ class LateralPlanner():
 
       # State transitions
       # off
-      # print(f'lane change state is {self.lane_change_state}')
-      # print(f'below lane change speed is {below_lane_change_speed}')
-      # print(f'one blinker is {one_blinker}')
-      # print(f'prev one blinker is {self.prev_one_blinker}')
       if self.lane_change_state == LaneChangeState.off and one_blinker and not self.prev_one_blinker and not below_lane_change_speed:
         if sm['carState'].leftBlinker or self.manual_desire == DesireStatus.leftLaneChange:
           self.lane_change_direction = LaneChangeDirection.left
