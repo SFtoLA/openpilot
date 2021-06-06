@@ -78,6 +78,6 @@ while True:
     continue
   dat.testJoystick.desire = current_desire
   dat.testJoystick.cruiseOffset = current_cruise_offset_MPH
-  print(ch)
+  print(ch, current_cruise_offset_MPH)
   keyboard_sock.send(dat.to_bytes())
   
