@@ -83,6 +83,8 @@ class Planner():
     self.params = Params()
     self.first_loop = True
 
+    self.cruise_offset_kph = 0
+
   def choose_solution(self, v_cruise_setpoint, enabled):
     if enabled:
       solutions = {'cruise': self.v_cruise}
@@ -113,7 +115,8 @@ class Planner():
     v_ego = sm['carState'].vEgo
 
     long_control_state = sm['controlsState'].longControlState
-    v_cruise_kph = sm['controlsState'].vCruise
+    self.cruise_offset_kph = sm['testJoystick'].cruiseOffset * CV.MPH_TO_KPH
+    v_cruise_kph = sm['controlsState'].vCruise + self.cruise_offset_kph
     force_slow_decel = sm['controlsState'].forceDecel
 
     v_cruise_kph = min(v_cruise_kph, V_CRUISE_MAX)

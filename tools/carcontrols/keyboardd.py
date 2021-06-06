@@ -13,10 +13,8 @@ from cereal import log
 
 import sys
 import termios
-import time
 from termios import (BRKINT, CS8, CSIZE, ECHO, ICANON, ICRNL, IEXTEN, INPCK,
                      ISTRIP, IXON, PARENB, VMIN, VTIME)
-from typing import Any
 import select
 
 # Indexes for termios list.
@@ -55,6 +53,7 @@ def getch():
 
 DesireStatus = log.Joystick.DesireStatus
 current_desire = DesireStatus.laneFollow
+current_cruise_offset_MPH = 0
 keyboard_sock = messaging.pub_sock('testJoystick')
 while True:
   # reset commit status
@@ -69,9 +68,16 @@ while True:
     current_desire = DesireStatus.laneFollow
   elif ch == 'c':
     dat.testJoystick.commit = True
+  elif ch == '1':
+    current_cruise_offset_MPH += 1
+  elif ch == '2':
+    current_cruise_offset_MPH -= 1
+  elif ch == '3':
+    current_cruise_offset_MPH = 0
   else:
     continue
   dat.testJoystick.desire = current_desire
+  dat.testJoystick.cruiseOffset = current_cruise_offset_MPH
   print(ch)
   keyboard_sock.send(dat.to_bytes())
   
