@@ -66,13 +66,13 @@ git add -f .
 git status
 git commit -a -m "openpilot v$VERSION release"
 
-# Run build
-SCONS_CACHE=1 scons -j3
+# # Run build
+# SCONS_CACHE=1 scons -j3
 
-if [ ! -z "$CI_PUSH" ]; then
-  echo "[-] Pushing to $CI_PUSH T=$SECONDS"
-  git remote set-url origin git@github.com:commaai/openpilot.git
-  git push -f origin master-ci:$CI_PUSH
-fi
+# if [ ! -z "$CI_PUSH" ]; then
+#   echo "[-] Pushing to $CI_PUSH T=$SECONDS"
+#   git remote set-url origin git@github.com:commaai/openpilot.git
+#   git push -f origin master-ci:$CI_PUSH
+# fi
 
-echo "[-] done T=$SECONDS"
+# echo "[-] done T=$SECONDS"
